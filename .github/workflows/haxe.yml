@@ -1,95 +1,109 @@
 name: snekky
 
-on: [push]
+on: [push, pull_request, workflow_dispatch]
+
+permissions:
+  contents: read
 
 jobs:
   linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: krdlab/setup-haxe@v1
+      - uses: actions/checkout@v6
+      - uses: krdlab/setup-haxe@v2
         with:
           haxe-version: 4.2.0
       - name: Install dependencies
         run: |
-          haxelib install console.hx 0.2.12 --quiet
-          haxelib install hxcpp --quiet
-          haxelib install hxargs --quiet
+          haxelib install console.hx 0.2.12 --quiet --always
+          haxelib install hxcpp 4.3.2 --quiet --always
+          haxelib install hxargs 4.0.0 --quiet --always
       - name: Build
         run: haxe scripts/build-cpp.hxml
       - name: Rename artifact
         run: mv cpp/Snekky cpp/snekky
       - name: Strip artifact symbols
         run: strip cpp/snekky
+      - name: Smoke test
+        run: ./cpp/snekky --help
       - name: Upload artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v6
         with:
           name: snekky-linux
           path: cpp/snekky
+          if-no-files-found: error
   windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v2
-      - uses: krdlab/setup-haxe@v1
+      - uses: actions/checkout@v6
+      - uses: krdlab/setup-haxe@v2
         with:
           haxe-version: 4.2.0
       - name: Install dependencies
         run: |
-          haxelib install console.hx 0.2.12 --quiet
-          haxelib install hxcpp --quiet
-          haxelib install hxargs --quiet
+          haxelib install console.hx 0.2.12 --quiet --always
+          haxelib install hxcpp 4.3.2 --quiet --always
+          haxelib install hxargs 4.0.0 --quiet --always
       - name: Build
         run: haxe scripts/build-cpp.hxml
       - name: Rename artifact
-        run: | 
-          cd cpp
-          ren Snekky.exe snekky.exe
-          cd ..
-      - name: Strip artifact symbols
-        run: strip cpp/snekky.exe
+        run: |
+          Rename-Item -Path cpp/Snekky.exe -NewName snekky-build.exe
+          Rename-Item -Path cpp/snekky-build.exe -NewName snekky.exe
+      - name: Smoke test
+        run: ./cpp/snekky.exe --help
       - name: Upload artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v6
         with:
           name: snekky-win
           path: cpp/snekky.exe
+          if-no-files-found: error
   macos:
-    runs-on: macos-latest
+    # Haxe 4.2.0 and this project's HXCPP_M64 target require Intel.
+    runs-on: macos-15-intel
     steps:
-      - uses: actions/checkout@v2
-      - uses: krdlab/setup-haxe@v1
+      - uses: actions/checkout@v6
+      - uses: krdlab/setup-haxe@v2
         with:
           haxe-version: 4.2.0
       - name: Install dependencies
         run: |
-          haxelib install console.hx 0.2.12 --quiet
-          haxelib install hxcpp --quiet
-          haxelib install hxargs --quiet
+          haxelib install console.hx 0.2.12 --quiet --always
+          haxelib install hxcpp 4.3.2 --quiet --always
+          haxelib install hxargs 4.0.0 --quiet --always
       - name: Build
         run: haxe scripts/build-cpp.hxml
       - name: Rename artifact
-        run: mv cpp/snekky cpp/snekky
+        # Use an intermediate name for case-insensitive filesystems.
+        run: |
+          mv cpp/Snekky cpp/snekky-build
+          mv cpp/snekky-build cpp/snekky
       - name: Strip artifact symbols
         run: strip cpp/snekky
+      - name: Smoke test
+        run: ./cpp/snekky --help
       - name: Upload artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v6
         with:
           name: snekky-macos
           path: cpp/snekky
+          if-no-files-found: error
   javascript:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
-      - uses: krdlab/setup-haxe@v1
+      - uses: actions/checkout@v6
+      - uses: krdlab/setup-haxe@v2
         with:
           haxe-version: 4.2.0
       - name: Install dependencies
         run: |
-          haxelib install console.hx 0.2.12 --quiet
-          haxelib install hxargs --quiet
+          haxelib install console.hx 0.2.12 --quiet --always
+          haxelib install hxargs 4.0.0 --quiet --always
       - name: Build
         run: haxe scripts/build-js.hxml
       - name: Upload artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v6
         with:
           name: snekky-js
           path: js/snekky.js
+          if-no-files-found: error
