@@ -13,7 +13,7 @@ b
 [Report an issue](https://github.com/snekkylang/snekky/issues)
 j
 </div>
-
+s
 ### Disclaimer!
 Please do not take this project too seriously. I'm in no way a professional. To be honest, I'm surprised myself that Snekky is even somewhat usable.
 
